@@ -61,14 +61,20 @@ public class EmployeeDBService {
 		return employeeRepository.findAll();
 	}
 
-	public Page<Employee> getAllEmployeesPages() {
-
-		PageRequest pageable = PageRequest.of(5, WebPageConfig.PAGE_SIZE);
+	public Page<Employee> getAllEmployeesPages(int pageSize, int pageNumber) {
+		
+		if (pageSize == 0 || pageSize > WebPageConfig.PAGE_SIZE_DEFAULT_MAX) {
+			pageSize = WebPageConfig.PAGE_SIZE_DEFAULT_MAX;
+		}
+		if (pageNumber == 0) {
+			pageNumber = 1;
+		}
+		
+		PageRequest pageable = PageRequest.of(pageNumber, pageSize);
 		Page<Employee> pages = employeePagingRepository.findAll(pageable);
-	
-			return pages;
-		
-		
+
+		return pages;
+
 	}
 
 	public String updateEmployeeService(Employee employee) {

@@ -43,9 +43,9 @@ public class EmployeeController {
 
 	@ApiOperation(value = "API2: Reading all the employees available in the database using Spring boot pagination")
 	@GetMapping(path = "/get-all-employees")
-	public ResponseEntity<?> getAllEmployees() {
+	public ResponseEntity<?> getAllEmployees(@RequestParam int pageSize, @RequestParam int pageNumber) {
 
-		Page<Employee> employeePage = employeeDBService.getAllEmployeesPages();
+		Page<Employee> employeePage = employeeDBService.getAllEmployeesPages(pageSize, pageNumber);
 		if (employeePage.hasContent()) {
 			return new ResponseEntity<Page<Employee>>(employeePage, HttpStatus.OK);
 		} else {
