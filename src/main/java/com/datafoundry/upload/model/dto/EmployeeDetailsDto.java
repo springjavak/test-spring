@@ -7,11 +7,11 @@ import lombok.Data;
 
 @Data
 public class EmployeeDetailsDto {
-	private int eid;
+	private String eid;
 	private String name;
-	@Min(value = 14, message = "Employee age should be 14 at least.") // , groups = ValidateDto.class)
-	private int age;
-	private int aid;
+	@Min(value = 14, message = "Employee age should be 14 at least.")
+	private String age;
+	private String aid;
 	private String street;
 	private String city;
 	@Size(min = 6, max = 6, message = "Pincode should contain 6 digits exactly.")

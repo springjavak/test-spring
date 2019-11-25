@@ -10,8 +10,8 @@ import lombok.Data;
 public class Employee {
 	@Id
 	private String id;
-	private int eid;
+	private String eid;
 	private String name;
-	private int age;
+	private String age;
 	private Address address;
 }

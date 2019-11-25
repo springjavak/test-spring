@@ -1,7 +1,13 @@
 package com.datafoundry.upload.controller;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import javax.validation.ConstraintViolationException;
+
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -13,7 +19,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.datafoundry.upload.model.dao.Employee;
+import com.datafoundry.upload.model.dao.repo.EmployeeRepository;
 import com.datafoundry.upload.model.dto.EmployeeDetailsDto;
 import com.datafoundry.upload.service.EmployeeDBService;
 import com.datafoundry.upload.service.ListValidatorService;
@@ -27,13 +36,15 @@ public class EmployeeController {
 	@Autowired
 	private EmployeeDBService employeeDBService;
 	@Autowired
-	private ListValidatorService listValidatorService; 
+	private ListValidatorService listValidatorService;
+	@Autowired
+	private EmployeeRepository employeeRepository;
 
 	@ApiOperation(value = "API1: Reading the excel through multipart file upload and inserting the data into database")
 	@PostMapping(path = "/save-employees")
 	public ResponseEntity<String> postEmployeeList(@RequestBody List<EmployeeDetailsDto> employeeDetailsDto)
 			throws ConstraintViolationException {
-		
+
 		listValidatorService.validateListItems(employeeDetailsDto);
 
 		String message = employeeDBService.postEmployeeListService(employeeDetailsDto);
@@ -78,5 +89,23 @@ public class EmployeeController {
 		} else {
 			return new ResponseEntity<String>(message, HttpStatus.CONFLICT);
 		}
+	}
+
+	@ApiOperation(value = "API1: .")
+	@PostMapping(path = "/post-employee-file")
+	public ResponseEntity<String> postEmployeeFile(@RequestParam MultipartFile multipartFile) throws IOException {
+
+		String message = employeeDBService.postEmployeeFileService(multipartFile);
+
+		return new ResponseEntity<String>(message, HttpStatus.OK);
+	}
+	
+	@ApiOperation(value = "API5: .")
+	@GetMapping(path = "/export-employee-file")
+	public ResponseEntity<String> exportEmployeeFile(@RequestParam String location) throws IOException {
+
+		String message = employeeDBService.ecportEmployeeData(location);
+
+		return new ResponseEntity<String>(message, HttpStatus.OK);
 	}
 }
