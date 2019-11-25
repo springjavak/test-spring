@@ -62,14 +62,14 @@ public class EmployeeDBService {
 	}
 
 	public Page<Employee> getAllEmployeesPages(int pageSize, int pageNumber) {
-		
-		if (pageSize == 0 || pageSize > WebPageConfig.PAGE_SIZE_DEFAULT_MAX) {
+
+		if (pageSize <= 0 || pageSize > WebPageConfig.PAGE_SIZE_DEFAULT_MAX) {
 			pageSize = WebPageConfig.PAGE_SIZE_DEFAULT_MAX;
 		}
-		if (pageNumber == 0) {
+		if (pageNumber <= 0) {
 			pageNumber = 1;
 		}
-		
+
 		PageRequest pageable = PageRequest.of(pageNumber, pageSize);
 		Page<Employee> pages = employeePagingRepository.findAll(pageable);
 
