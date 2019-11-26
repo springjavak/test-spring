@@ -165,7 +165,7 @@ public class EmployeeDBService {
 					cellAid.setCellValue(list.getAddress().getAid());
 					cellStreet.setCellValue(list.getAddress().getStreet());
 					cellCity.setCellValue(list.getAddress().getCity());
-					cellPincode.setCellValue(list.getAddress().getCity());
+					cellPincode.setCellValue(list.getAddress().getPincode());
 					cellEidForeign.setCellValue(list.getEid());
 				}
 			}
