@@ -25,7 +25,7 @@ public class SwaggerConfig extends WebMvcConfigurationSupport {
 	}
 
 	private ApiInfo metaData() {
-		return new ApiInfoBuilder().title("Upload").description("Uploading excel file data and inserting into MongoDB").version("1.0.1").build();
+		return new ApiInfoBuilder().title("Upload").description("Uploading excel file data and inserting into MongoDB and viceversa").version("1.0.1").build();
 	}
 	@Override
 	protected void addResourceHandlers(ResourceHandlerRegistry registry) {

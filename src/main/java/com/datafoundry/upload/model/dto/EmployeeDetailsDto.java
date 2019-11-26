@@ -17,7 +17,7 @@ public class EmployeeDetailsDto {
 	private String aid;
 	private String street;
 	private String city;
-	@Size(min = 6, max = 6, message = "Pincode should contain 6 digits exactly.")
-	@Digits(message = "Pincode should contain digits only", fraction = 0, integer = 6)
+	@Size(min = 6, max = 6, message = StaticMessages.VALID_EXACT + "6")
+	@Digits(message = StaticMessages.VALID_NUMBER, fraction = 0, integer = 6)
 	private String pincode;
 }

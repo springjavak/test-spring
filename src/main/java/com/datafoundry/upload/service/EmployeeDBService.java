@@ -1,43 +1,33 @@
 package com.datafoundry.upload.service;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
-import javax.xml.ws.Response;
-
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import com.datafoundry.upload.config.WebPageConfig;
+import com.datafoundry.upload.model.NoDataException;
 import com.datafoundry.upload.model.StaticMessages;
 import com.datafoundry.upload.model.dao.Address;
 import com.datafoundry.upload.model.dao.Employee;
-import com.datafoundry.upload.model.dao.repo.EmployeePagingRepository;
-import com.datafoundry.upload.model.dao.repo.EmployeeRepository;
 import com.datafoundry.upload.model.dto.EmployeeDetailsDto;
-import com.datafoundry.upload.model.dto.ExportResponse;
 import com.datafoundry.upload.model.dto.UploadResponse;
+import com.datafoundry.upload.repository.EmployeePagingRepository;
+import com.datafoundry.upload.repository.EmployeeRepository;
 
 @Service
 public class EmployeeDBService {
@@ -131,12 +121,10 @@ public class EmployeeDBService {
 	}
 
 	// API-5
-	public Response exportEmployeeData(String location) throws IOException {
-		Response response = null;
-		String message;
+	public Workbook exportEmployeeData() throws IOException {
+		XSSFWorkbook workbook = new XSSFWorkbook();
 		List<Employee> listEmployee = employeeRepository.findAll();
 		if (!isEmpty(listEmployee)) {
-			XSSFWorkbook workbook = new XSSFWorkbook();
 			XSSFSheet sheetEmployee = workbook.createSheet("Employee");
 			XSSFSheet sheetAddress = workbook.createSheet("Address");
 			int rownumEmployee = 0;
@@ -181,23 +169,10 @@ public class EmployeeDBService {
 					cellEidForeign.setCellValue(list.getEid());
 				}
 			}
-
-			DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss_SSS");
-			String date = dateFormat.format(new Date());
-			FileOutputStream out = new FileOutputStream(
-					new File(location + "employees-with-addresses_" + date + ".xlsx"));
-//
-//			File file = new File(location + "employees-with-addresses_" + date + ".xlsx");
-//			InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
-//			exportResponse.setInputStreamResource(resource);
-			workbook.write(out);
-			out.close();
-			workbook.close();
-			message = StaticMessages.RESPONSE_EXPORTED;
 		} else {
-			message = StaticMessages.VALID_NO_DATA_TO_PROCESS;
+			throw new NoDataException();
 		}
-		return response;
+		return workbook;
 	}
 
 	// Other API-1.1
@@ -226,7 +201,7 @@ public class EmployeeDBService {
 		return message;
 	}
 
-	private static boolean isEmpty(Collection collection) {
+	private static boolean isEmpty(Collection<?> collection) {
 		return (collection == null || collection.isEmpty());
 	}
 }
