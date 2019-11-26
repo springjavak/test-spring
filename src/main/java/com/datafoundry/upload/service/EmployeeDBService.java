@@ -1,6 +1,7 @@
 package com.datafoundry.upload.service;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
@@ -19,6 +20,8 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -30,7 +33,8 @@ import com.datafoundry.upload.model.dao.Employee;
 import com.datafoundry.upload.model.dao.repo.EmployeePagingRepository;
 import com.datafoundry.upload.model.dao.repo.EmployeeRepository;
 import com.datafoundry.upload.model.dto.EmployeeDetailsDto;
-import com.datafoundry.upload.model.dto.UploadMessage;
+import com.datafoundry.upload.model.dto.ExportResponse;
+import com.datafoundry.upload.model.dto.UploadResponse;
 
 @Service
 public class EmployeeDBService {
@@ -41,14 +45,13 @@ public class EmployeeDBService {
 	private EmployeePagingRepository employeePagingRepository;
 
 	// API-1
-	public UploadMessage postEmployeeFileService(MultipartFile multipartFile) throws IOException {
-		UploadMessage uploadMessage = new UploadMessage();
+	public UploadResponse postEmployeeFileService(MultipartFile multipartFile) throws IOException {
+		UploadResponse uploadResponse = new UploadResponse();
 		Map<String, Address> addressMap = new HashMap<String, Address>();
 		if (!multipartFile.isEmpty()) {
 			XSSFWorkbook workbook = new XSSFWorkbook(multipartFile.getInputStream());
 			XSSFSheet worksheetEmployee = workbook.getSheet("Employee");
 			XSSFSheet worksheetAddress = workbook.getSheet("Address");
-//			Map<String, Address> addressMap = new HashMap<String, Address>();
 			DataFormatter dataFormatter = new DataFormatter();
 			for (int i = 1; i < worksheetAddress.getPhysicalNumberOfRows(); i++) {
 				Address address = new Address();
@@ -72,19 +75,19 @@ public class EmployeeDBService {
 				employee.setAge(dataFormatter.formatCellValue(row.getCell(2)));
 				listEmployee.add(employee);
 			}
-//			listEmployee.forEach(emp -> emp.setAddress(addressMap.get(emp.getEid())));
 			for (Employee emp : listEmployee) {
 				emp.setAddress(addressMap.get(emp.getEid()));
 				addressMap.remove(emp.getEid());
 			}
 			employeeRepository.saveAll(listEmployee);
 			workbook.close();
-			uploadMessage.setMessage(StaticMessages.RESPONSE_CREATED);
+			uploadResponse.setMessage(StaticMessages.RESPONSE_CREATED);
 		} else {
-			uploadMessage.setMessage(StaticMessages.VALID_NO_DATA_TO_PROCESS);
+			uploadResponse.setMessage(StaticMessages.VALID_NO_DATA_TO_PROCESS);
 		}
-		uploadMessage.setAddressMap(addressMap);;
-		return uploadMessage;
+		uploadResponse.setAddressMap(addressMap);
+		;
+		return uploadResponse;
 	}
 
 	// API-2
@@ -178,7 +181,11 @@ public class EmployeeDBService {
 			DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss_SSS");
 			String date = dateFormat.format(new Date());
 			FileOutputStream out = new FileOutputStream(
-					new File(""+ location + "employees-with-addresses_" + date + ".xlsx"));
+					new File(location + "employees-with-addresses_" + date + ".xlsx"));
+//
+//			File file = new File(location + "employees-with-addresses_" + date + ".xlsx");
+//			InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
+//			exportResponse.setInputStreamResource(resource);
 			workbook.write(out);
 			out.close();
 			workbook.close();

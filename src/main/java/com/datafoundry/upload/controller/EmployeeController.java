@@ -3,6 +3,8 @@ package com.datafoundry.upload.controller;
 import java.io.IOException;
 import java.util.List;
 import javax.validation.ConstraintViolationException;
+
+import org.apache.poi.openxml4j.opc.internal.ContentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -17,7 +19,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.datafoundry.upload.model.StaticMessages;
 import com.datafoundry.upload.model.dao.Employee;
 import com.datafoundry.upload.model.dto.EmployeeDetailsDto;
-import com.datafoundry.upload.model.dto.UploadMessage;
+import com.datafoundry.upload.model.dto.ExportResponse;
+import com.datafoundry.upload.model.dto.UploadResponse;
 import com.datafoundry.upload.service.EmployeeDBService;
 import com.datafoundry.upload.service.ListValidatorService;
 import io.swagger.annotations.Api;
@@ -34,18 +37,18 @@ public class EmployeeController {
 
 	@ApiOperation(value = "API1: Reading the excel through multipart file upload and inserting the data into database.")
 	@RequestMapping(path = "/post-employee-file", method = RequestMethod.POST)
-	public ResponseEntity<UploadMessage> postEmployeeFile(@RequestParam MultipartFile multipartFile)
+	public ResponseEntity<UploadResponse> postEmployeeFile(@RequestParam MultipartFile multipartFile)
 			throws IOException {
-		UploadMessage uploadMessage = employeeDBService.postEmployeeFileService(multipartFile);
-		String message = uploadMessage.getMessage();
+		UploadResponse uploadResponse = employeeDBService.postEmployeeFileService(multipartFile);
+		String message = uploadResponse.getMessage();
 		if (message == StaticMessages.VALID_NO_DATA_TO_PROCESS) {
-			return new ResponseEntity<UploadMessage>(uploadMessage, HttpStatus.CONFLICT);
+			return new ResponseEntity<UploadResponse>(uploadResponse, HttpStatus.CONFLICT);
 		} else {
-			if (uploadMessage.getAddressMap().isEmpty()) {				
-				return new ResponseEntity<UploadMessage>(uploadMessage, HttpStatus.CREATED);
+			if (uploadResponse.getAddressMap().isEmpty()) {
+				return new ResponseEntity<UploadResponse>(uploadResponse, HttpStatus.CREATED);
 			} else {
-				uploadMessage.setMessage(StaticMessages.RESPONSE_ADDRESS_NOT_MAPPED);
-				return new ResponseEntity<UploadMessage>(uploadMessage, HttpStatus.CREATED);
+				uploadResponse.setMessage(StaticMessages.RESPONSE_ADDRESS_NOT_MAPPED);
+				return new ResponseEntity<UploadResponse>(uploadResponse, HttpStatus.CREATED);
 			}
 		}
 	}
@@ -88,7 +91,7 @@ public class EmployeeController {
 	@RequestMapping(path = "/export-employee-file", method = RequestMethod.GET)
 	public ResponseEntity<String> exportEmployeeFile(@RequestParam String location) throws IOException {
 		String message = employeeDBService.exportEmployeeData(location);
-		if (message == StaticMessages.RESPONSE_EXPORTED) {
+		if (message.equals(StaticMessages.RESPONSE_EXPORTED)) {
 			return new ResponseEntity<String>(message, HttpStatus.OK);
 		} else {
 			return new ResponseEntity<String>(message, HttpStatus.NO_CONTENT);
