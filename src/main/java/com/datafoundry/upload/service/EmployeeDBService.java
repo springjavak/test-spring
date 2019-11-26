@@ -13,6 +13,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import javax.xml.ws.Response;
+
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
@@ -128,7 +131,8 @@ public class EmployeeDBService {
 	}
 
 	// API-5
-	public String exportEmployeeData(String location) throws IOException {
+	public Response exportEmployeeData(String location) throws IOException {
+		Response response = null;
 		String message;
 		List<Employee> listEmployee = employeeRepository.findAll();
 		if (!isEmpty(listEmployee)) {
@@ -193,7 +197,7 @@ public class EmployeeDBService {
 		} else {
 			message = StaticMessages.VALID_NO_DATA_TO_PROCESS;
 		}
-		return message;
+		return response;
 	}
 
 	// Other API-1.1
