@@ -15,7 +15,7 @@ public class ListValidatorService {
 	@Autowired
 	private Validator validator;
 
-	public <T extends Collection> void validateListItems(T list) throws ConstraintViolationException {
+	public <T extends Collection<?>> void validateListItems(T list) throws ConstraintViolationException {
 		Set<ConstraintViolation<Object>> constraintViolations = null;
 		for (Object item : list) {
 			constraintViolations = validator.validate(item);

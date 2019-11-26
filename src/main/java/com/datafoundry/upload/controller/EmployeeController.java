@@ -1,29 +1,23 @@
 package com.datafoundry.upload.controller;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import javax.validation.ConstraintViolationException;
-
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
+import com.datafoundry.upload.model.StaticMessages;
 import com.datafoundry.upload.model.dao.Employee;
-import com.datafoundry.upload.model.dao.repo.EmployeeRepository;
 import com.datafoundry.upload.model.dto.EmployeeDetailsDto;
+import com.datafoundry.upload.model.dto.UploadMessage;
 import com.datafoundry.upload.service.EmployeeDBService;
 import com.datafoundry.upload.service.ListValidatorService;
 import io.swagger.annotations.Api;
@@ -37,75 +31,80 @@ public class EmployeeController {
 	private EmployeeDBService employeeDBService;
 	@Autowired
 	private ListValidatorService listValidatorService;
-	@Autowired
-	private EmployeeRepository employeeRepository;
 
-	@ApiOperation(value = "API1: Reading the excel through multipart file upload and inserting the data into database")
-	@PostMapping(path = "/save-employees")
-	public ResponseEntity<String> postEmployeeList(@RequestBody List<EmployeeDetailsDto> employeeDetailsDto)
-			throws ConstraintViolationException {
-
-		listValidatorService.validateListItems(employeeDetailsDto);
-
-		String message = employeeDBService.postEmployeeListService(employeeDetailsDto);
-
-		return new ResponseEntity<String>(message, HttpStatus.CREATED);
+	@ApiOperation(value = "API1: Reading the excel through multipart file upload and inserting the data into database.")
+	@RequestMapping(path = "/post-employee-file", method = RequestMethod.POST)
+	public ResponseEntity<UploadMessage> postEmployeeFile(@RequestParam MultipartFile multipartFile)
+			throws IOException {
+		UploadMessage uploadMessage = employeeDBService.postEmployeeFileService(multipartFile);
+		String message = uploadMessage.getMessage();
+		if (message == StaticMessages.VALID_NO_DATA_TO_PROCESS) {
+			return new ResponseEntity<UploadMessage>(uploadMessage, HttpStatus.CONFLICT);
+		} else {
+			if (uploadMessage.getAddressMap().isEmpty()) {				
+				return new ResponseEntity<UploadMessage>(uploadMessage, HttpStatus.CREATED);
+			} else {
+				uploadMessage.setMessage(StaticMessages.RESPONSE_ADDRESS_NOT_MAPPED);
+				return new ResponseEntity<UploadMessage>(uploadMessage, HttpStatus.CREATED);
+			}
+		}
 	}
 
 	@ApiOperation(value = "API2: Reading all the employees available in the database using Spring boot pagination")
-	@GetMapping(path = "/get-all-employees")
+	@RequestMapping(path = "/get-all-employees", method = RequestMethod.GET)
 	public ResponseEntity<?> getAllEmployees(@RequestParam int pageSize, @RequestParam int pageNumber) {
-
 		Page<Employee> employeePage = employeeDBService.getAllEmployeesPages(pageSize, pageNumber);
 		if (employeePage.hasContent()) {
 			return new ResponseEntity<Page<Employee>>(employeePage, HttpStatus.OK);
 		} else {
-			String message = "There is no data";
-			return new ResponseEntity<String>(message, HttpStatus.NOT_FOUND);
+			String message = StaticMessages.VALID_NO_DATA_TO_PROCESS;
+			return new ResponseEntity<String>(message, HttpStatus.NO_CONTENT);
 		}
 	}
 
 	@ApiOperation(value = "API3: Updating Employee details or address details based on employeeID")
-	@PutMapping(path = "/update-employee")
+	@RequestMapping(path = "/update-employee", method = RequestMethod.PUT)
 	public ResponseEntity<String> putEmployee(@RequestBody Employee employee) {
-
 		String message = employeeDBService.updateEmployeeService(employee);
-
-		if (message == "Updated") {
+		if (message == StaticMessages.RESPONSE_UPDATED) {
 			return new ResponseEntity<String>(message, HttpStatus.OK);
 		} else {
-			return new ResponseEntity<String>(message, HttpStatus.CONFLICT);
+			return new ResponseEntity<String>(message, HttpStatus.BAD_REQUEST);
 		}
 	}
 
 	@ApiOperation(value = "API4: Deleting employee details. Corresponding Address details are also deleted.")
-	@DeleteMapping(path = "/delete-employee")
+	@RequestMapping(path = "/delete-employee", method = RequestMethod.DELETE)
 	public ResponseEntity<String> deleteEmployee(@RequestParam String id) {
-
 		String message = employeeDBService.deleteEmployeeService(id);
-
-		if (message == "Deleted") {
+		if (message == StaticMessages.RESPONSE_DELETED) {
 			return new ResponseEntity<String>(message, HttpStatus.OK);
 		} else {
-			return new ResponseEntity<String>(message, HttpStatus.CONFLICT);
+			return new ResponseEntity<String>(message, HttpStatus.BAD_REQUEST);
 		}
 	}
 
-	@ApiOperation(value = "API1: .")
-	@PostMapping(path = "/post-employee-file")
-	public ResponseEntity<String> postEmployeeFile(@RequestParam MultipartFile multipartFile) throws IOException {
-
-		String message = employeeDBService.postEmployeeFileService(multipartFile);
-
-		return new ResponseEntity<String>(message, HttpStatus.OK);
-	}
-	
-	@ApiOperation(value = "API5: .")
-	@GetMapping(path = "/export-employee-file")
+	@ApiOperation(value = "API5: Loading all the employee details and address details available in the database into excel.")
+	@RequestMapping(path = "/export-employee-file", method = RequestMethod.GET)
 	public ResponseEntity<String> exportEmployeeFile(@RequestParam String location) throws IOException {
+		String message = employeeDBService.exportEmployeeData(location);
+		if (message == StaticMessages.RESPONSE_EXPORTED) {
+			return new ResponseEntity<String>(message, HttpStatus.OK);
+		} else {
+			return new ResponseEntity<String>(message, HttpStatus.NO_CONTENT);
+		}
+	}
 
-		String message = employeeDBService.ecportEmployeeData(location);
-
-		return new ResponseEntity<String>(message, HttpStatus.OK);
+	@ApiOperation(value = "Other-API1.1: Inserting a list of employees into database")
+	@RequestMapping(path = "/save-employees", method = RequestMethod.POST)
+	public ResponseEntity<String> postEmployeeList(@RequestBody List<EmployeeDetailsDto> employeeDetailsDto)
+			throws ConstraintViolationException {
+		listValidatorService.validateListItems(employeeDetailsDto);
+		String message = employeeDBService.postEmployeeListService(employeeDetailsDto);
+		if (message == StaticMessages.RESPONSE_CREATED) {
+			return new ResponseEntity<String>(message, HttpStatus.CREATED);
+		} else {
+			return new ResponseEntity<String>(message, HttpStatus.BAD_REQUEST);
+		}
 	}
 }
